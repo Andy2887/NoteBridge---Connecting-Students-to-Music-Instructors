@@ -22,7 +22,7 @@ public class FirebaseConfig {
                 .setProjectId("notebridge-8c9a0")
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setStorageBucket("notebridge-8c9a0.firebasestorage.app")
-                .setDatabaseUrl("https://notebridge-8c9a0-default-rtdb.firebaseio.com/")
+//                .setDatabaseUrl("https://notebridge-8c9a0-default-rtdb.firebaseio.com/")
                 .build();
 
         return FirebaseApp.initializeApp(options);

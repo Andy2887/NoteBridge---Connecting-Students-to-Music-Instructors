@@ -45,21 +45,36 @@ public class FileStorageService {
 
         String uniqueID = UUID.randomUUID().toString();
         String objectName = uniqueID + "_" + file.getOriginalFilename();
-
         BlobId blobId = BlobId.of(bucketName, objectName);
-
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
 
-        storage.create(blobInfo, file.getBytes());
+        try {
+            // Upload to Firebase
+            storage.create(blobInfo, file.getBytes());
 
-        FileMetaData metaData = new FileMetaData();
-        metaData.setUniqueId(uniqueID);
-        metaData.setObjectName(objectName);
-        metaData.setUploadDate(LocalDateTime.now());
+            // Save metadata to MySQL
+            FileMetaData metaData = new FileMetaData();
+            metaData.setUniqueId(uniqueID);
+            metaData.setObjectName(objectName);
+            metaData.setUploadDate(LocalDateTime.now());
+            repo.save(metaData);
 
-        repo.save(metaData);
-
-        return uniqueID;
+            return uniqueID;
+        } catch (Exception e) {
+            System.err.println("Data saved failed: " + e.getMessage() +"\ntrying to clean up db and firebase");
+            try {
+                storage.delete(blobId);
+                int deleted = repo.deleteByUniqueId(uniqueID);
+                if (deleted == 0) {
+                    System.err.println("Warning: No records were deleted from the database for uniqueId: " + uniqueID);
+                } else {
+                    System.out.println("Successfully deleted " + deleted + " record(s) from database");
+                }
+            } catch (Exception ex) {
+                System.err.println("Failed to clean up resources after upload failure: " + ex.getMessage());
+            }
+            throw e; // Re-throw the original exception
+        }
     }
 
     public FileResponse retrieveFile(String fileId) {
