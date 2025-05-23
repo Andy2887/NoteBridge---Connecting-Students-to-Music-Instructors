@@ -18,9 +18,7 @@ public class FileStorageController {
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(@RequestParam MultipartFile file) {
         try {
-            String fileId = fileStorageService.uploadFile(file
-
-            );
+            String fileId = fileStorageService.uploadFile(file);
             return ResponseEntity.ok(fileId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
