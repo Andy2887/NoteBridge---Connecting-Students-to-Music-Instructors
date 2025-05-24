@@ -15,10 +15,24 @@ public class FileStorageController {
     @Autowired
     private FileStorageService fileStorageService;
 
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam MultipartFile file) {
+    @PostMapping("/upload/profile/{userId}")
+    public ResponseEntity<String> uploadProfilePicture(
+            @RequestParam MultipartFile file,
+            @PathVariable Long userId) {
         try {
-            String fileId = fileStorageService.uploadFile(file);
+            String fileId = fileStorageService.uploadProfilePicture(file, userId);
+            return ResponseEntity.ok(fileId);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/upload/lesson_pic/{lessonId}")
+    public ResponseEntity<String> uploadLessonPicture(
+            @RequestParam MultipartFile file,
+            @PathVariable Long lessonId) {
+        try {
+            String fileId = fileStorageService.uploadLessonPicture(file, lessonId);
             return ResponseEntity.ok(fileId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

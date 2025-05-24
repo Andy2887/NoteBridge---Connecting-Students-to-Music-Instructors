@@ -1,50 +1,45 @@
 package com.notebridge.project.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-// Marks this class as a JPA entity,
-// meaning it will be mapped to a database table
 @Entity
-
-// Specifies the database table name for this entity
 @Table(name = "users")
-
-// This is a Lombok annotation (not JPA)
-// that generates getters, setters.
 @Data
 public class User {
 
-    @Id // Designates the field as the primary key
-    // Configures how the primary key values are generated.
-    // IDENTITY: auto-increment
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Customizes the mapping between the field and the database column.
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     @Column(nullable = false, unique = true)
     private String username;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     @Column(nullable = false)
     private String password;
 
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
     @Column(nullable = false, unique = true)
     private String email;
 
-    // Specifies that the enum should be persisted as a string value in the database
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private Role role = Role.STUDENT; // Default role
 
     private String instrument;
 
+    @Size(max = 1000, message = "Bio cannot exceed 1000 characters")
     @Column(length = 1000)
     private String bio;
 
-    // Profile image could be stored as a path or URL
-    private String profileImageUrl;
-
-    // Additional fields
     private String firstName;
     private String lastName;
     private String phoneNumber;
@@ -52,5 +47,6 @@ public class User {
 
 enum Role {
     STUDENT,
-    TEACHER
+    TEACHER,
+    ADMIN
 }

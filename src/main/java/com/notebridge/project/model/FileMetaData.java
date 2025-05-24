@@ -20,6 +20,15 @@ public class FileMetaData {
     @Column(name = "upload_date", nullable = false)
     private LocalDateTime uploadDate;
 
+    // “Map this User object to a column named user_id that stores the user's primary key (id)”.
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "lesson_id")
+    private Lesson lesson;
+
     public FileMetaData() {}
 
     public FileMetaData(Integer id, String uniqueId, String objectName, LocalDateTime uploadDate) {
@@ -61,5 +70,21 @@ public class FileMetaData {
 
     public void setUploadDate(LocalDateTime uploadDate) {
         this.uploadDate = uploadDate;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Lesson getLesson() {
+        return lesson;
+    }
+
+    public void setLesson(Lesson lesson) {
+        this.lesson = lesson;
     }
 }
