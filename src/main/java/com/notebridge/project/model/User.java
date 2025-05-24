@@ -43,10 +43,10 @@ public class User {
     private String firstName;
     private String lastName;
     private String phoneNumber;
-}
 
-enum Role {
-    STUDENT,
-    TEACHER,
-    ADMIN
+    public enum Role {
+        STUDENT,
+        TEACHER,
+        ADMIN
+    }
 }

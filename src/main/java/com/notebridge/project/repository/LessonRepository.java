@@ -21,4 +21,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
 
     // Find non-cancelled lessons
     List<Lesson> findByIsCancelledFalse();
+
+    List<Lesson> findByTeacherAndIsCancelledFalse(User user);
+
+    List<Lesson> findByStartTimeAfterAndIsCancelledFalse(LocalDateTime now);
 }

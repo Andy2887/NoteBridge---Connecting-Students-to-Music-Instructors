@@ -33,10 +33,10 @@ public class Lesson {
     private String physicalAddress;
 
     private boolean isCancelled = false;
-}
 
-enum LocationType {
-    ONLINE,
-    IN_PERSON,
-    HYBRID
+    public enum LocationType {
+        ONLINE,
+        IN_PERSON,
+        HYBRID
+    }
 }
