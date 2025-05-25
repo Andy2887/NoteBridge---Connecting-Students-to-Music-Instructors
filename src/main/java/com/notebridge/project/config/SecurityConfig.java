@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/files/**").authenticated()
                         .requestMatchers("/api/users/**").authenticated()
                         .requestMatchers("/api/lessons/**").authenticated()
+                        .requestMatchers("/api/chats/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .formLogin((form) -> form
