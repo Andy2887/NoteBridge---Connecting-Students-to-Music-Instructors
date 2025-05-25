@@ -7,6 +7,7 @@ import com.notebridge.project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,20 @@ import java.util.Optional;
 @RequestMapping("/api/lessons")
 @Validated
 public class LessonController {
+    
+    /*
+     * This controller uses Spring Security's @PreAuthorize annotations for role-based access control.
+     * Benefits:
+     * - No database queries for role checking (uses in-memory authorities)
+     * - Automatic 403 Forbidden responses for unauthorized access
+     * - Cleaner, more declarative security
+     * - Integration with Spring Security's proven authorization framework
+     * 
+     * Role hierarchy:
+     * - STUDENT: Can view lessons only
+     * - TEACHER: Can create, update, cancel, reactivate their own lessons + view all
+     * - ADMIN: Full access to all lesson operations + permanent deletion
+     */
 
     @Autowired
     private LessonRepository lessonRepository;
@@ -84,14 +99,11 @@ public class LessonController {
 
     // CREATE LESSON - Only teachers and admins can create lessons
     @PostMapping
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<String> createLesson(@Valid @RequestBody Lesson lesson) {
         try {
             // Get current authenticated user
             User currentUser = getCurrentUser();
-            if (currentUser == null || (currentUser.getRole() != User.Role.TEACHER && currentUser.getRole() != User.Role.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body("Only teachers and admins can create lessons");
-            }
 
             // Validation
             if (lesson.getStartTime() == null || lesson.getEndTime() == null) {
@@ -135,13 +147,10 @@ public class LessonController {
 
     // UPDATE LESSON - Only the teacher who created the lesson or admins can update it
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<String> updateLesson(@PathVariable Long id, @Valid @RequestBody Lesson updatedLesson) {
         try {
             User currentUser = getCurrentUser();
-            if (currentUser == null || (currentUser.getRole() != User.Role.TEACHER && currentUser.getRole() != User.Role.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body("Only teachers and admins can update lessons");
-            }
 
             Optional<Lesson> existingLessonOpt = lessonRepository.findById(id);
             if (!existingLessonOpt.isPresent()) {
@@ -194,13 +203,10 @@ public class LessonController {
 
     // CANCEL LESSON - Only the teacher who created the lesson or admins can cancel it
     @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<String> cancelLesson(@PathVariable Long id) {
         try {
             User currentUser = getCurrentUser();
-            if (currentUser == null || (currentUser.getRole() != User.Role.TEACHER && currentUser.getRole() != User.Role.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body("Only teachers and admins can cancel lessons");
-            }
 
             Optional<Lesson> lessonOpt = lessonRepository.findById(id);
             if (!lessonOpt.isPresent()) {
@@ -231,13 +237,10 @@ public class LessonController {
 
     // REACTIVATE LESSON - Only the teacher who created the lesson or admins can reactivate it
     @PutMapping("/{id}/reactivate")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<String> reactivateLesson(@PathVariable Long id) {
         try {
             User currentUser = getCurrentUser();
-            if (currentUser == null || (currentUser.getRole() != User.Role.TEACHER && currentUser.getRole() != User.Role.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body("Only teachers and admins can reactivate lessons");
-            }
 
             Optional<Lesson> lessonOpt = lessonRepository.findById(id);
             if (!lessonOpt.isPresent()) {
@@ -268,12 +271,10 @@ public class LessonController {
 
     // GET MY LESSONS - Teachers can see all their lessons, Admins can see all lessons
     @GetMapping("/my-lessons")
+    @PreAuthorize("hasRole('TEACHER') or hasRole('ADMIN')")
     public ResponseEntity<List<Lesson>> getMyLessons() {
         try {
             User currentUser = getCurrentUser();
-            if (currentUser == null || (currentUser.getRole() != User.Role.TEACHER && currentUser.getRole() != User.Role.ADMIN)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
 
             List<Lesson> lessons;
             if (currentUser.getRole() == User.Role.ADMIN) {
@@ -291,14 +292,9 @@ public class LessonController {
 
     // GET ALL LESSONS INCLUDING CANCELLED - Only admins can access this
     @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Lesson>> getAllLessonsIncludingCancelled() {
         try {
-            User currentUser = getCurrentUser();
-            if (currentUser == null || currentUser.getRole() != User.Role.ADMIN) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body(null);
-            }
-
             List<Lesson> lessons = lessonRepository.findAll();
             return ResponseEntity.ok(lessons);
         } catch (Exception e) {
@@ -308,14 +304,9 @@ public class LessonController {
 
     // DELETE LESSON PERMANENTLY - Only admins can permanently delete lessons
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteLesson(@PathVariable Long id) {
         try {
-            User currentUser = getCurrentUser();
-            if (currentUser == null || currentUser.getRole() != User.Role.ADMIN) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                   .body("Only admins can permanently delete lessons");
-            }
-
             Optional<Lesson> lessonOpt = lessonRepository.findById(id);
             if (!lessonOpt.isPresent()) {
                 return ResponseEntity.notFound().build();
@@ -331,16 +322,8 @@ public class LessonController {
 
     // Helper method to get current authenticated user
     private User getCurrentUser() {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return null;
-            }
-
-            String username = authentication.getName();
-            return userRepository.findByUsername(username);
-        } catch (Exception e) {
-            return null;
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        return userRepository.findByUsername(username);
     }
 }
